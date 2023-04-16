@@ -20,76 +20,69 @@ const { NotImplementedError } = require('../extensions/index.js');
  *
  */
 class VigenereCipheringMachine {
-  constructor(reverse = true) {
-    this.reverse = reverse;
+  constructor() {
+    this.charCodeA = 65;
+    this.charCodeZ = 90;
   }
 
-  encrypt(message, key) {
-    if (!message || !key) {
-      throw new Error('Invalid arguments');
+  normalizeStrings(message = '', key = '') {
+    const normalizedMessage = message.toUpperCase();
+    let normalizedKey = key.toUpperCase();
+    while (normalizedKey.length < normalizedMessage.length) {
+      normalizedKey = normalizedKey.repeat(2);
     }
+    normalizedKey = normalizedKey.slice(0, normalizedMessage.length);
+    return [normalizedMessage, normalizedKey];
+  }
 
-    const messageUpperCase = message.toUpperCase();
-    const keyUpperCase = key.toUpperCase();
+  encrypt(message = '', key = '', shouldReverse = true) {
+    if (!message || !key) {
+      throw Error('Incorrect arguments!');
+    }
+    const [normalizedMessage, normalizedKey] = this.normalizeStrings(message, key);
     let encryptedMessage = '';
-
-    for (let i = 0, j = 0; i < message.length; i++) {
-      const currentChar = messageUpperCase[i];
-
-      if (/[A-Z]/.test(currentChar)) {
-        const keyChar = keyUpperCase[j % key.length];
-        const keyCharCode = keyChar.charCodeAt(0) - 65;
-        const currentCharCode = currentChar.charCodeAt(0) - 65;
-        const encryptedCharCode = ((currentCharCode + keyCharCode) % 26) + 65;
-        const encryptedChar = String.fromCharCode(encryptedCharCode);
-        encryptedMessage += encryptedChar;
-        j++;
+    for (let messageIndex = 0, keyIndex = 0; messageIndex < normalizedMessage.length; messageIndex++) {
+      if (/^[A-Z]$/.test(normalizedMessage[messageIndex])) {
+        const shiftedCharCode = normalizedMessage.charCodeAt(messageIndex) + normalizedKey.charCodeAt(keyIndex) - this.charCodeA;
+        if (shiftedCharCode > this.charCodeZ) {
+          shiftedCharCode -= this.charCodeZ - this.charCodeA + 1;
+        }
+        encryptedMessage += String.fromCharCode(shiftedCharCode);
+        keyIndex++;
       } else {
-        encryptedMessage += currentChar;
+        encryptedMessage += normalizedMessage[messageIndex];
       }
     }
-
-    if (this.reverse) {
-      return encryptedMessage.split('').reverse().join('');
+    if (!shouldReverse) {
+      encryptedMessage = encryptedMessage.split('').reverse().join('');
     }
-
     return encryptedMessage;
   }
 
-  decrypt(encryptedMessage, key) {
-    if (!encryptedMessage || !key) {
-      throw new Error('Invalid arguments');
+  decrypt(message = '', key = '', shouldReverse = true) {
+    if (!message || !key) {
+      throw Error('Incorrect arguments!');
     }
-  
-    const encryptedMessageUpperCase = encryptedMessage.toUpperCase();
-    const keyUpperCase = key.toUpperCase();
+    const [normalizedMessage, normalizedKey] = this.normalizeStrings(message, key);
     let decryptedMessage = '';
-  
-    for (let i = 0, j = 0; i < encryptedMessage.length; i++) {
-      const currentChar = encryptedMessageUpperCase[i];
-  
-      if (/[A-Z]/.test(currentChar)) {
-        const keyChar = keyUpperCase[j % key.length];
-        const keyCharCode = keyChar.charCodeAt(0) - 65;
-        const currentCharCode = currentChar.charCodeAt(0) - 65;
-        const decryptedCharCode =
-          ((currentCharCode - keyCharCode + 26) % 26) + 65;
-        const decryptedChar = String.fromCharCode(decryptedCharCode);
-        decryptedMessage += decryptedChar;
-        j++;
+    for (let messageIndex = 0, keyIndex = 0; messageIndex < normalizedMessage.length; messageIndex++) {
+      if (/^[A-Z]$/.test(normalizedMessage[messageIndex])) {
+        let shiftedCharCode = normalizedMessage.charCodeAt(messageIndex) - normalizedKey.charCodeAt(keyIndex) + this.charCodeA;
+        if (shiftedCharCode < this.charCodeA) {
+          shiftedCharCode += this.charCodeZ - this.charCodeA + 1;
+        }
+        decryptedMessage += String.fromCharCode(shiftedCharCode);
+        keyIndex++;
       } else {
-        decryptedMessage += currentChar;
+        decryptedMessage += normalizedMessage[messageIndex];
       }
     }
-  
-    if (this.reverse) {
-      return decryptedMessage.split('').reverse().join('');
+    if (!shouldReverse) {
+      decryptedMessage = decryptedMessage.split('').reverse().join('');
     }
-  
     return decryptedMessage;
   }
 }
-
 
 module.exports = {
   VigenereCipheringMachine,

@@ -17,34 +17,30 @@ const { NotImplementedError } = require('../extensions/index.js');
  */
 
 function repeater(str, options) {
-  let separator =
-    options.separator !== undefined ? String(options.separator) : '+';
-  let additionSeparator =
-    options.additionSeparator !== undefined
-      ? String(options.additionSeparator)
-      : '|';
-  let repeatTimes = options.repeatTimes !== undefined ? options.repeatTimes : 1;
-  let additionRepeatTimes =
-    options.additionRepeatTimes !== undefined ? options.additionRepeatTimes : 1;
-  let addition = options.addition !== undefined ? String(options.addition) : '';
+  const repeatString = (string, separator, times) => {
+    return string.concat(separator).repeat(times).slice(0, -separator.length);
+  };
 
-  let strArr = [];
-  let additionArr = [];
+  let mainString = String(str);
+  let additionalString = '';
 
-  for (let i = 0; i < repeatTimes; i++) {
-    strArr.push(String(str));
-    if (i !== repeatTimes - 1) {
-      for (let j = 0; j < additionRepeatTimes; j++) {
-        additionArr.push(addition);
-      }
-    }
+  if (!options) return mainString;
+
+  if (typeof options.addition !== 'undefined') {
+    additionalString = repeatString(
+      String(options.addition),
+      options.additionSeparator || '|',
+      options.additionRepeatTimes || 1
+    );
   }
 
-  let additionStr = additionArr.join(additionSeparator);
-  let resultStr = strArr.map((item) => item + additionStr).join(separator);
-
-  return resultStr;
+  return repeatString(
+    mainString.concat(additionalString),
+    options.separator || '+',
+    options.repeatTimes || 1
+  );
 }
+
 module.exports = {
   repeater,
 };
